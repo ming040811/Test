@@ -26,7 +26,6 @@
     function init() {
       scene = new THREE.Scene();
 
-      // 기본 카메라
       camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
       camera.position.set(3, 3, 5);
 
@@ -36,12 +35,13 @@
 
       controls = new OrbitControls(camera, renderer.domElement);
 
-      // FBX 불러오기
-      const loader = new FBXLoader();
-      loader.load("test.fbx", function (object) {
-        scene.add(object);
+      // 깃허브 페이지에서 FBX 불러오기
+const loader = new FBXLoader();
+const fbxUrl = "https://ming040811.github.io/Test/test.fbx"; // 대소문자 정확히
+loader.load(fbxUrl, function(object) {
+    scene.add(object);
+});
 
-        // FBX 안에 카메라 있으면 교체
         object.traverse(function (child) {
           if (child.isCamera) {
             camera = child;
@@ -51,12 +51,10 @@
         });
       });
 
-      // 조명 생성
       light = new THREE.PointLight(0xffffff, 1, 100);
       light.position.set(5, 5, 5);
       scene.add(light);
 
-      // GUI
       const gui = new GUI({ container: document.getElementById("gui-container") });
       const lightFolder = gui.addFolder("Light Controls");
       lightFolder.add(light.position, "x", -10, 10, 0.1);
@@ -81,3 +79,4 @@
   </script>
 </body>
 </html>
+
