@@ -13,6 +13,7 @@
   <div id="gui-container"></div>
 
   <script type="module">
+    // Three.js ES Module
     import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
     import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js';
     import GUI from 'https://cdn.jsdelivr.net/npm/lil-gui@0.19/+esm';
@@ -37,7 +38,7 @@
       renderer.setSize(window.innerWidth, window.innerHeight);
       document.body.appendChild(renderer.domElement);
 
-      // OrbitControls (ESM)
+      // OrbitControls (ESM 방식)
       controls = new OrbitControls(camera, renderer.domElement);
 
       // 조명
@@ -48,7 +49,7 @@
       light.position.set(5, 5, 5);
       scene.add(light);
 
-      // 큐브
+      // 테스트용 큐브
       const geometry = new THREE.BoxGeometry(1, 1, 1);
       const material = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
       cube = new THREE.Mesh(geometry, material);
@@ -74,7 +75,7 @@
 
     function animate() {
       requestAnimationFrame(animate);
-      cube.rotation.y += 0.01;
+      cube.rotation.y += 0.01; // 큐브 회전
       renderer.render(scene, camera);
     }
   </script>
