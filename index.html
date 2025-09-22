@@ -18,7 +18,8 @@
     import { FBXLoader } from "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/FBXLoader.js";
     import GUI from "https://cdn.jsdelivr.net/npm/lil-gui@0.19/+esm";
 
-    let scene, camera, renderer, controls, light;
+    let scene, camera, renderer, controls, light, ambient;
+    let fallbackCube;
 
     init();
     animate();
@@ -35,24 +36,11 @@
 
       controls = new OrbitControls(camera, renderer.domElement);
 
-      // FBX 불러오기 (깃허브 Pages URL 사용)
-      const loader = new FBXLoader();
-      const fbxUrl = "https://ming040811.github.io/Test/test.fbx"; // ← 파일 이름 대소문자 정확히
-      loader.load(fbxUrl, function (object) {
-        scene.add(object);
+      // Ambient Light 추가 (모든 방향 기본 조명)
+      ambient = new THREE.AmbientLight(0xffffff, 0.5);
+      scene.add(ambient);
 
-        object.traverse(function (child) {
-          if (child.isCamera) {
-            camera = child;
-            controls.object = camera;
-            console.log("FBX 카메라 사용됨");
-          }
-        });
-      }, undefined, function (error) {
-        console.error("FBX 로드 실패:", error);
-      });
-
-      // 포인트 라이트
+      // Point Light
       light = new THREE.PointLight(0xffffff, 1, 100);
       light.position.set(5, 5, 5);
       scene.add(light);
@@ -65,6 +53,39 @@
       lightFolder.add(light.position, "z", -10, 10, 0.1);
       lightFolder.add(light, "intensity", 0, 5, 0.1).name("Brightness");
       lightFolder.open();
+
+      // FBX 로드
+      const loader = new FBXLoader();
+      const fbxUrl = "https://ming040811.github.io/Test/test.fbx"; // 파일 이름 대소문자 정확히
+      loader.load(
+        fbxUrl,
+        function (object) {
+          scene.add(object);
+          console.log("FBX 로드 성공:", object);
+
+          // FBX 안에 카메라가 있으면 사용
+          object.traverse(function (child) {
+            if (child.isCamera) {
+              camera = child;
+              controls.object = camera;
+              console.log("FBX 카메라 사용됨");
+            }
+          });
+
+          // FBX 로드 성공하면 큐브 제거
+          if (fallbackCube) scene.remove(fallbackCube);
+        },
+        undefined,
+        function (error) {
+          console.warn("FBX 로드 실패. 대체 큐브 표시:", error);
+
+          // FBX 로드 실패 시 대체 큐브 추가
+          const geometry = new THREE.BoxGeometry(1, 1, 1);
+          const material = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
+          fallbackCube = new THREE.Mesh(geometry, material);
+          scene.add(fallbackCube);
+        }
+      );
 
       window.addEventListener("resize", onWindowResize);
     }
@@ -82,3 +103,5 @@
   </script>
 </body>
 </html>
+
+
