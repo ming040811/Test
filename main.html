@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <title>FBX Light Simulator</title>
   <style>
-    body { margin: 0; background: #111; }
+    body { margin: 0; background: #111; color: white; }
     canvas { display: block; }
     #gui-container { position: absolute; top: 10px; right: 10px; }
   </style>
@@ -12,12 +12,12 @@
 <body>
   <div id="gui-container"></div>
 
-  <script type="module">
-    import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
-    import { OrbitControls } from "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js";
-    import { FBXLoader } from "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/FBXLoader.js";
-    import GUI from "https://cdn.jsdelivr.net/npm/lil-gui@0.19/+esm";
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/loaders/FBXLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19/dist/lil-gui.min.js"></script>
 
+  <script>
     let scene, camera, renderer, controls, light;
 
     init();
@@ -26,6 +26,7 @@
     function init() {
       scene = new THREE.Scene();
 
+      // 기본 카메라 (FBX 파일의 카메라로 교체 예정)
       camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
       camera.position.set(3, 3, 5);
 
@@ -33,14 +34,14 @@
       renderer.setSize(window.innerWidth, window.innerHeight);
       document.body.appendChild(renderer.domElement);
 
-      controls = new OrbitControls(camera, renderer.domElement);
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
 
-      // 깃허브 페이지에서 FBX 불러오기
-      const loader = new FBXLoader();
-      const fbxUrl = "https://username.github.io/repo-name/test.fbx"; // <- 여기 바꾸기
-      loader.load(fbxUrl, function (object) {
+      // FBX 불러오기
+      const loader = new THREE.FBXLoader();
+      loader.load("test.fbx", function (object) {
         scene.add(object);
 
+        // FBX 파일에 카메라가 있으면 그걸 사용
         object.traverse(function (child) {
           if (child.isCamera) {
             camera = child;
@@ -50,16 +51,19 @@
         });
       });
 
+      // 조명 생성
       light = new THREE.PointLight(0xffffff, 1, 100);
       light.position.set(5, 5, 5);
       scene.add(light);
 
-      const gui = new GUI({ container: document.getElementById("gui-container") });
+      // GUI 설정
+      const gui = new lil.GUI({ container: document.getElementById("gui-container") });
       const lightFolder = gui.addFolder("Light Controls");
       lightFolder.add(light.position, "x", -10, 10, 0.1);
       lightFolder.add(light.position, "y", -10, 10, 0.1);
       lightFolder.add(light.position, "z", -10, 10, 0.1);
       lightFolder.add(light, "intensity", 0, 5, 0.1).name("Brightness");
+      lightFolder.add(light, "power", 0, 2000, 10).name("Power");
       lightFolder.open();
 
       window.addEventListener("resize", onWindowResize);
@@ -78,4 +82,5 @@
   </script>
 </body>
 </html>
+
 
