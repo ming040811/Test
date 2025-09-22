@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>FBX Light Simulator</title>
   <style>
     body { margin: 0; background: #111; }
@@ -13,7 +13,6 @@
   <div id="gui-container"></div>
 
   <script type="module">
-    // CDN 경로로 명확히 지정
     import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
     import { OrbitControls } from "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js";
     import { FBXLoader } from "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/FBXLoader.js";
@@ -28,43 +27,46 @@
     function init() {
       scene = new THREE.Scene();
 
+      // 카메라
       camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
       camera.position.set(3, 3, 5);
 
+      // 렌더러
       renderer = new THREE.WebGLRenderer({ antialias: true });
       renderer.setSize(window.innerWidth, window.innerHeight);
       document.body.appendChild(renderer.domElement);
 
+      // 컨트롤
       controls = new OrbitControls(camera, renderer.domElement);
 
-      // Ambient Light
+      // 조명
       ambient = new THREE.AmbientLight(0xffffff, 0.5);
       scene.add(ambient);
 
-      // Point Light
       light = new THREE.PointLight(0xffffff, 1, 100);
       light.position.set(5, 5, 5);
       scene.add(light);
 
       // GUI
       const gui = new GUI({ container: document.getElementById("gui-container") });
-      const lightFolder = gui.addFolder("Light Controls");
-      lightFolder.add(light.position, "x", -10, 10, 0.1);
-      lightFolder.add(light.position, "y", -10, 10, 0.1);
-      lightFolder.add(light.position, "z", -10, 10, 0.1);
-      lightFolder.add(light, "intensity", 0, 5, 0.1).name("Brightness");
-      lightFolder.open();
+      const folder = gui.addFolder("Light Controls");
+      folder.add(light.position, "x", -10, 10, 0.1);
+      folder.add(light.position, "y", -10, 10, 0.1);
+      folder.add(light.position, "z", -10, 10, 0.1);
+      folder.add(light, "intensity", 0, 5, 0.1).name("Brightness");
+      folder.open();
 
-      // FBX 로드
+      // FBX 로드 (테스트용 URL)
       const loader = new FBXLoader();
-      const fbxUrl = "https://ming040811.github.io/Test/test.fbx";
+      const fbxUrl = "https://ming040811.github.io/Test/test.fbx"; // GitHub Pages에 올린 FBX
       loader.load(
         fbxUrl,
-        function (object) {
+        (object) => {
           scene.add(object);
           console.log("FBX 로드 성공:", object);
 
-          object.traverse(function (child) {
+          // FBX 안 카메라 사용
+          object.traverse((child) => {
             if (child.isCamera) {
               camera = child;
               controls.object = camera;
@@ -75,8 +77,10 @@
           if (fallbackCube) scene.remove(fallbackCube);
         },
         undefined,
-        function (error) {
-          console.warn("FBX 로드 실패. 대체 큐브 표시:", error);
+        (error) => {
+          console.warn("FBX 로드 실패, 대체 큐브 표시:", error);
+
+          // 대체 큐브
           const geometry = new THREE.BoxGeometry(1, 1, 1);
           const material = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
           fallbackCube = new THREE.Mesh(geometry, material);
@@ -100,3 +104,4 @@
   </script>
 </body>
 </html>
+
