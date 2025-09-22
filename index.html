@@ -13,6 +13,7 @@
   <div id="gui-container"></div>
 
   <script type="module">
+    // CDN 경로로 명확히 지정
     import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
     import { OrbitControls } from "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js";
     import { FBXLoader } from "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/FBXLoader.js";
@@ -36,7 +37,7 @@
 
       controls = new OrbitControls(camera, renderer.domElement);
 
-      // Ambient Light 추가 (모든 방향 기본 조명)
+      // Ambient Light
       ambient = new THREE.AmbientLight(0xffffff, 0.5);
       scene.add(ambient);
 
@@ -56,14 +57,13 @@
 
       // FBX 로드
       const loader = new FBXLoader();
-      const fbxUrl = "https://ming040811.github.io/Test/test.fbx"; // 파일 이름 대소문자 정확히
+      const fbxUrl = "https://ming040811.github.io/Test/test.fbx";
       loader.load(
         fbxUrl,
         function (object) {
           scene.add(object);
           console.log("FBX 로드 성공:", object);
 
-          // FBX 안에 카메라가 있으면 사용
           object.traverse(function (child) {
             if (child.isCamera) {
               camera = child;
@@ -72,14 +72,11 @@
             }
           });
 
-          // FBX 로드 성공하면 큐브 제거
           if (fallbackCube) scene.remove(fallbackCube);
         },
         undefined,
         function (error) {
           console.warn("FBX 로드 실패. 대체 큐브 표시:", error);
-
-          // FBX 로드 실패 시 대체 큐브 추가
           const geometry = new THREE.BoxGeometry(1, 1, 1);
           const material = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
           fallbackCube = new THREE.Mesh(geometry, material);
@@ -103,6 +100,3 @@
   </script>
 </body>
 </html>
-
-
-
