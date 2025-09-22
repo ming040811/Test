@@ -13,12 +13,13 @@
   <div id="gui-container"></div>
 
   <script type="module">
+    // CDN으로 모든 모듈 불러오기
     import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
     import { OrbitControls } from "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js";
     import GUI from "https://cdn.jsdelivr.net/npm/lil-gui@0.19/+esm";
 
     let scene, camera, renderer, controls;
-    let light, ambient;
+    let ambient, light;
     let cube;
 
     init();
@@ -46,7 +47,7 @@
       light.position.set(5, 5, 5);
       scene.add(light);
 
-      // 큐브 (FBX 대신 테스트용)
+      // 테스트용 큐브
       const geometry = new THREE.BoxGeometry(1, 1, 1);
       const material = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
       cube = new THREE.Mesh(geometry, material);
@@ -78,6 +79,3 @@
   </script>
 </body>
 </html>
-
-
-
