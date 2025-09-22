@@ -13,7 +13,6 @@
   <div id="gui-container"></div>
 
   <script type="module">
-    // Three.js ES Module
     import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
     import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js';
     import GUI from 'https://cdn.jsdelivr.net/npm/lil-gui@0.19/+esm';
@@ -38,7 +37,7 @@
       renderer.setSize(window.innerWidth, window.innerHeight);
       document.body.appendChild(renderer.domElement);
 
-      // OrbitControls (ESM 방식)
+      // OrbitControls (ES Module 방식)
       controls = new OrbitControls(camera, renderer.domElement);
 
       // 조명
