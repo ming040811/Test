@@ -1,89 +1,213 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <title>Three.js Light Simulator</title>
-  <style>
-    body { margin: 0; background: #111; }
-    canvas { display: block; }
-    #gui-container { position: absolute; top: 10px; right: 10px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>직교 뷰 조명 시뮬레이션 (Y/Z축 변경)</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+        #container {
+            width: 100vw;
+            height: 100vh;
+            display: block;
+        }
+        #controls {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 5px;
+            color: white;
+            z-index: 10;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-family: sans-serif;
+            font-size: 14px;
+        }
+        input[type="range"] {
+            width: 200px;
+            margin-bottom: 12px;
+        }
+    </style>
 </head>
 <body>
-  <div id="gui-container"></div>
+    <div id="container"></div>
+    <div id="controls">
+        <label for="lightX">Light X</label>
+        <input type="range" id="lightX" min="-15" max="15" value="0" step="0.1">
+        
+        <label for="lightY">Light Depth (Y)</label>
+        <input type="range" id="lightY" min="-15" max="15" value="5" step="0.1">
+        
+        <label for="lightZ">Light Height (Z)</label>
+        <input type="range" id="lightZ" min="0" max="15" value="8" step="0.1">
+        
+        <hr>
 
-  <script type="module">
-    // 반드시 CDN URL 사용
-    import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-    import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js';
-    import { FBXLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/FBXLoader.js';
-    import GUI from 'https://cdn.jsdelivr.net/npm/lil-gui@0.19/+esm';
+        <label for="intensity">Intensity (밝기)</label>
+        <input type="range" id="intensity" min="0" max="3" value="1" step="0.05">
 
-    let scene, camera, renderer, controls;
-    let ambient, light;
-    let fallbackCube;
+        <label for="colorTemp">Color Temperature (색온도 K)</label>
+        <input type="range" id="colorTemp" min="1500" max="10000" value="6600" step="100">
+    </div>
 
-    function init() {
-      scene = new THREE.Scene();
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <script>
+        // --- 장면 설정 ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x333333);
 
-      camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-      camera.position.set(3, 3, 5);
-
-      renderer = new THREE.WebGLRenderer({ antialias: true });
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      document.body.appendChild(renderer.domElement);
-
-      controls = new OrbitControls(camera, renderer.domElement);
-
-      ambient = new THREE.AmbientLight(0xffffff, 0.5);
-      scene.add(ambient);
-
-      light = new THREE.PointLight(0xffffff, 1, 100);
-      light.position.set(5, 5, 5);
-      scene.add(light);
-
-      // GUI
-      const gui = new GUI({ container: document.getElementById('gui-container') });
-      const folder = gui.addFolder('Light Controls');
-      folder.add(light.position, 'x', -10, 10, 0.1);
-      folder.add(light.position, 'y', -10, 10, 0.1);
-      folder.add(light.position, 'z', -10, 10, 0.1);
-      folder.add(light, 'intensity', 0, 5, 0.1).name('Brightness');
-      folder.open();
-
-      // FBX 로드
-      const loader = new FBXLoader();
-      const fbxUrl = 'https://ming040811.github.io/Test/test.fbx'; // FBX URL
-      loader.load(
-        fbxUrl,
-        function(object) {
-          scene.add(object);
-          if (fallbackCube) scene.remove(fallbackCube);
-        },
-        undefined,
-        function(error) {
-          console.warn('FBX 로드 실패, 큐브 표시', error);
-          const geometry = new THREE.BoxGeometry(1, 1, 1);
-          const material = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
-          fallbackCube = new THREE.Mesh(geometry, material);
-          scene.add(fallbackCube);
-        }
-      );
-
-      window.addEventListener('resize', () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
+        // --- 카메라 설정 (Orthographic) ---
+        const aspect = window.innerWidth / window.innerHeight;
+        const frustumSize = 15;
+        const camera = new THREE.OrthographicCamera(
+            frustumSize * aspect / -2, 
+            frustumSize * aspect / 2, 
+            frustumSize / 2, 
+            frustumSize / -2, 
+            0.1, 
+            100
+        );
+        camera.position.set(8, 7, 10);
+        camera.lookAt(0, 0, 0);
+        scene.add(camera);
+        
+        // --- 렌더러 설정 ---
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
-      });
-    }
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        document.getElementById('container').appendChild(renderer.domElement);
 
-    function animate() {
-      requestAnimationFrame(animate);
-      renderer.render(scene, camera);
-    }
+        // --- 공간 및 오브젝트 생성 ---
+        const planeSize = 12;
+        const floorGeo = new THREE.PlaneGeometry(planeSize, planeSize);
+        const floor = new THREE.Mesh(floorGeo, new THREE.MeshStandardMaterial({ color: 0x808080 }));
+        floor.rotation.x = -Math.PI / 2;
+        floor.position.y = -4;
+        floor.receiveShadow = true;
+        scene.add(floor);
 
-    init();
-    animate();
-  </script>
+        const wall1Geo = new THREE.PlaneGeometry(planeSize, planeSize);
+        const wall1 = new THREE.Mesh(wall1Geo, new THREE.MeshStandardMaterial({ color: 0xa0a0a0 }));
+        wall1.position.z = -planeSize / 2;
+        wall1.position.y = floor.position.y + planeSize / 2;
+        wall1.receiveShadow = true;
+        scene.add(wall1);
+
+        const wall2Geo = new THREE.PlaneGeometry(planeSize, planeSize);
+        const wall2 = new THREE.Mesh(wall2Geo, new THREE.MeshStandardMaterial({ color: 0xc0c0c0 }));
+        wall2.rotation.y = Math.PI / 2;
+        wall2.position.x = -planeSize / 2;
+        wall2.position.y = floor.position.y + planeSize / 2;
+        wall2.receiveShadow = true;
+        scene.add(wall2);
+
+        const cubeSize = 2;
+        const cube = new THREE.Mesh(
+            new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize),
+            new THREE.MeshStandardMaterial({ color: 0xffffff })
+        );
+        cube.position.y = floor.position.y + cubeSize / 2;
+        cube.castShadow = true;
+        scene.add(cube);
+
+        // --- 조명 설정 ---
+        const light = new THREE.DirectionalLight(0xffffff, 1);
+        light.castShadow = true;
+        scene.add(light);
+
+        light.shadow.mapSize.width = 2048;
+        light.shadow.mapSize.height = 2048;
+        light.shadow.camera.left = -planeSize;
+        light.shadow.camera.right = planeSize;
+        light.shadow.camera.top = planeSize;
+        light.shadow.camera.bottom = -planeSize;
+        light.shadow.camera.near = 0.1;
+        light.shadow.camera.far = 40;
+
+        const lightSphere = new THREE.Mesh(
+            new THREE.SphereGeometry(0.3, 32, 32),
+            new THREE.MeshBasicMaterial({ color: 0xffff00 })
+        );
+        scene.add(lightSphere);
+
+        // --- UI 컨트롤러 ---
+        const lightXSlider = document.getElementById('lightX');
+        const lightYSlider = document.getElementById('lightY');
+        const lightZSlider = document.getElementById('lightZ');
+        const intensitySlider = document.getElementById('intensity');
+        const colorTempSlider = document.getElementById('colorTemp');
+
+        function updateLight() {
+            // 위치 업데이트 (Y와 Z 슬라이더 값을 서로 교체)
+            light.position.set(
+                parseFloat(lightXSlider.value),
+                parseFloat(lightZSlider.value),  // 높이(Y)를 Z 슬라이더로 조절
+                parseFloat(lightYSlider.value)   // 깊이(Z)를 Y 슬라이더로 조절
+            );
+            lightSphere.position.copy(light.position);
+            light.intensity = parseFloat(intensitySlider.value);
+            const temp = parseFloat(colorTempSlider.value);
+            const color = kelvinToRGB(temp);
+            light.color.setRGB(color.r / 255, color.g / 255, color.b / 255);
+            lightSphere.material.color.set(light.color); 
+        }
+
+        [lightXSlider, lightYSlider, lightZSlider, intensitySlider, colorTempSlider].forEach(slider => {
+            slider.addEventListener('input', updateLight);
+        });
+        
+        function kelvinToRGB(kelvin) {
+            let temp = kelvin / 100;
+            let r, g, b;
+            if (temp <= 66) {
+                r = 255;
+                g = 99.4708025861 * Math.log(temp) - 161.1195681661;
+            } else {
+                r = temp - 60;
+                r = 329.698727446 * Math.pow(r, -0.1332047592);
+                g = temp - 60;
+                g = 288.1221695283 * Math.pow(g, -0.0755148492);
+            }
+            if (temp >= 66) {
+                b = 255;
+            } else {
+                if (temp <= 19) {
+                    b = 0;
+                } else {
+                    b = temp - 10;
+                    b = 138.5177312231 * Math.log(b) - 305.0447927307;
+                }
+            }
+            const clamp = (val) => Math.max(0, Math.min(255, val));
+            return { r: clamp(r), g: clamp(g), b: clamp(b) };
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            const aspect = window.innerWidth / window.innerHeight;
+            camera.left = frustumSize * aspect / -2;
+            camera.right = frustumSize * aspect / 2;
+            camera.top = frustumSize / 2;
+            camera.bottom = frustumSize / -2;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        updateLight();
+        animate();
+    </script>
 </body>
 </html>
