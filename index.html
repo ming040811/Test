@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3점 투시 조명 시뮬레이션 (단일 파일)</title>
+    <title>3점 투시 조명 시뮬레이션 (수정됨)</title>
     <style>
         /* CSS 코드 */
         body {
@@ -25,6 +25,7 @@
             background: rgba(0, 0, 0, 0.5);
             border-radius: 5px;
             color: white;
+            z-index: 10; /* 컨트롤러가 다른 요소 위에 오도록 */
         }
 
         label {
@@ -44,9 +45,9 @@
         <label for="lightX">Light X</label>
         <input type="range" id="lightX" min="-10" max="10" value="0" step="0.1">
         <label for="lightY">Light Y</label>
-        <input type="range" id="lightY" min="1" max="20" value="5" step="0.1">
+        <input type="range" id="lightY" min="0" max="20" value="10" step="0.1">
         <label for="lightZ">Light Z</label>
-        <input type="range" id="lightZ" min="-10" max="10" value="5" step="0.1">
+        <input type="range" id="lightZ" min="-10" max="10" value="10" step="0.1">
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -56,10 +57,14 @@
         // 장면, 카메라, 렌더러 생성
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer();
+        const renderer = new THREE.WebGLRenderer({ antialias: true }); // antialias 추가로 부드러운 렌더링
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.shadowMap.enabled = true; // 그림자 활성화
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap; // 부드러운 그림자 타입
         document.getElementById('container').appendChild(renderer.domElement);
+
+        // 배경색 설정 (옵션)
+        scene.background = new THREE.Color(0x222222);
 
         // 벽과 바닥 생성
         const geometry = new THREE.PlaneGeometry(20, 20);
@@ -72,71 +77,88 @@
         floor.receiveShadow = true; // 그림자를 받는 평면
         scene.add(floor);
 
-        // 벽 1
+        // 벽 1 (뒷벽)
         const wallMaterial1 = new THREE.MeshStandardMaterial({ color: 0xa0a0a0, side: THREE.DoubleSide });
         const wall1 = new THREE.Mesh(geometry, wallMaterial1);
         wall1.position.z = -10;
-        wall1.position.y = 5;
+        wall1.position.y = 5; // 바닥 기준으로 윗부분
         wall1.receiveShadow = true;
         scene.add(wall1);
 
-        // 벽 2
+        // 벽 2 (왼쪽 벽)
         const wallMaterial2 = new THREE.MeshStandardMaterial({ color: 0xc0c0c0, side: THREE.DoubleSide });
         const wall2 = new THREE.Mesh(geometry, wallMaterial2);
-        wall2.rotation.y = Math.PI / 2;
+        wall2.rotation.y = Math.PI / 2; // Y축으로 90도 회전
         wall2.position.x = -10;
-        wall2.position.y = 5;
+        wall2.position.y = 5; // 바닥 기준으로 윗부분
         wall2.receiveShadow = true;
         scene.add(wall2);
 
-        // 중앙 정사각형 오브젝트
+        // 중앙 정사각형 오브젝트 (정지)
         const boxGeometry = new THREE.BoxGeometry(2, 2, 2);
         const boxMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
         const cube = new THREE.Mesh(boxGeometry, boxMaterial);
-        cube.position.y = -4;
+        cube.position.y = -4; // 바닥 위에 살짝 떠 있도록
         cube.castShadow = true; // 그림자를 생성하는 오브젝트
         scene.add(cube);
 
         // 조명 생성
         const light = new THREE.DirectionalLight(0xffffff, 1);
-        light.position.set(0, 5, 5);
+        light.position.set(0, 10, 10); // 초기 조명 위치
         light.castShadow = true;
         scene.add(light);
 
         // 그림자 품질 설정
-        light.shadow.mapSize.width = 1024;
-        light.shadow.mapSize.height = 1024;
-        light.shadow.camera.near = 0.5;
-        light.shadow.camera.far = 50;
+        light.shadow.mapSize.width = 2048; // 그림자 맵 해상도 증가
+        light.shadow.mapSize.height = 2048;
+        light.shadow.camera.near = 0.1;
+        light.shadow.camera.far = 30;
+        light.shadow.camera.left = -15;
+        light.shadow.camera.right = 15;
+        light.shadow.camera.top = 15;
+        light.shadow.camera.bottom = -15;
 
-        // 카메라 위치 설정
-        camera.position.set(5, 5, 15);
-        camera.lookAt(0, 0, 0);
+        // 가상 노란색 동그라미 (조명 시각화)
+        const lightSphereGeometry = new THREE.SphereGeometry(0.5, 32, 32); // 작은 구
+        const lightSphereMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00 }); // 노란색
+        const lightSphere = new THREE.Mesh(lightSphereGeometry, lightSphereMaterial);
+        scene.add(lightSphere);
+
+        // 카메라 위치 설정 (3점 투시처럼 보이도록)
+        camera.position.set(10, 8, 15); // 특정 각도에서 바라보도록 설정
+        camera.lookAt(0, 0, 0); // 중앙을 바라보도록
 
         // 조명 위치 조절 슬라이더
         const lightXSlider = document.getElementById('lightX');
         const lightYSlider = document.getElementById('lightY');
         const lightZSlider = document.getElementById('lightZ');
 
-        lightXSlider.addEventListener('input', () => {
+        // 초기 슬라이더 값 설정 (조명 초기 위치와 일치하도록)
+        lightXSlider.value = light.position.x;
+        lightYSlider.value = light.position.y;
+        lightZSlider.value = light.position.z;
+
+        function updateLightPosition() {
             light.position.x = parseFloat(lightXSlider.value);
-        });
-
-        lightYSlider.addEventListener('input', () => {
             light.position.y = parseFloat(lightYSlider.value);
-        });
-
-        lightZSlider.addEventListener('input', () => {
             light.position.z = parseFloat(lightZSlider.value);
-        });
+            
+            // 조명 시각화 구도 조명과 동일한 위치로 이동
+            lightSphere.position.copy(light.position);
+        }
+
+        lightXSlider.addEventListener('input', updateLightPosition);
+        lightYSlider.addEventListener('input', updateLightPosition);
+        lightZSlider.addEventListener('input', updateLightPosition);
+
+        // 초기 조명 위치 업데이트 호출
+        updateLightPosition();
 
         // 애니메이션
         function animate() {
             requestAnimationFrame(animate);
 
-            // 큐브 회전
-            cube.rotation.x += 0.01;
-            cube.rotation.y += 0.01;
+            // 큐브 회전 제거 (정지 상태 유지)
 
             renderer.render(scene, camera);
         }
